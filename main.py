@@ -1,8 +1,9 @@
 import keyboard
+import winreg as reg
 import json
-from os import getcwd
-from os.path import isfile
+from os import getcwd, mkdir
 
+num = None
 words = []
 endings = []
 
@@ -34,12 +35,23 @@ modifiers = [
 spaced = False
 
 
-def updateJSON():
-    file = open("words.json", mode="w")
-    file.write(json.dumps(words))
+def startup():
+    key = reg.HKEY_CURRENT_USER
+    key_value = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+    opened = reg.OpenKey(key, key_value, 0, reg.KEY_ALL_ACCESS)
+    reg.SetValueEx(opened, "Typing Analyser", 0, reg.REG_SZ, __file__)
+    reg.CloseKey(opened)
 
-    file = open("endings.json", mode="w")
-    file.write(json.dumps(endings))
+
+def updateJSON():
+    file = open("JSONs\\{}\\words.json".format(num), mode="w")
+    file.write(json.dumps(words))
+    file.close()
+
+
+#    file = open("JSONs\\{}\\endings.json".format(num), mode="w")
+#    file.write(json.dumps(endings))
+#    file.close()
 
 
 def modifierDown():
@@ -50,16 +62,18 @@ def modifierDown():
     return False
 
 
-def initJSON():
-    global words
-    global endings
+def initNum():
+    global num
 
-    if isfile(getcwd() + "\\words.json") and isfile(getcwd() + "\\endings.json"):
-        with open("words.json", mode="r") as read:
-            words = json.load(read)
+    file = open("JSONs\\num.txt", mode="r")
+    num = str(int(file.read()) + 1)
+    file.close()
 
-        with open("endings.json", mode="r") as read:
-            endings = json.load(read)
+    file = open("JSONs\\num.txt", mode="w")
+    file.write(num)
+    file.close()
+
+    mkdir(getcwd() + "\\JSONs\\{}".format(num))
 
 
 def onKey(event):
@@ -110,11 +124,13 @@ def onKey(event):
 
 
 def main():
-    initJSON()
+    startup()
+    initNum()
     keyboard.on_press(onKey)
 
     while True:
         pass
 
 
-main()
+if __name__ == '__main__':
+    main()
